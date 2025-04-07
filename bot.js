@@ -1,7 +1,31 @@
 const TelegramBot = require('node-telegram-bot-api');
+require('dotenv').config();
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }, // Railway requires SSL
+});
+
+async function testConnection() {
+  try {
+    const res = await pool.query('SELECT * from ids');
+    console.log('✅ Connected successfully at:', res.rows[0].now);
+    const rows = res.rows ;
+
+    rows.forEach(row => {
+      console.log(`Serial: ${row.serial}, ID: ${row.id}`);
+    });
+  } catch (err) {
+    console.error('❌ Error connecting to database:', err.message);
+  } finally {
+    await pool.end();
+  }
+}
+
 
 // Replace with your own token
-const token = '7838439395:AAFqV9sc4vi0-JB_x2tj1dJ0AU3BZaTLG48';
+const token = process.env.BOT_TOKEN;
 
 // Polling mode: Bot will constantly check for new messages
 const bot = new TelegramBot(token, { polling: true });
@@ -25,3 +49,6 @@ bot.onText(/\/start/, (msg) => {
 
   bot.sendMessage(chatId, welcomeText);
 });
+
+
+testConnection();

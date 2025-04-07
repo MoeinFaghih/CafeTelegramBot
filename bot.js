@@ -51,4 +51,39 @@ bot.onText(/\/start/, (msg) => {
 });
 
 
-testConnection();
+bot.onText(/\/subscribe/, async (msg) => {
+  const chatId = msg.chat.id;
+  var subed = false;
+
+  // Insert or ignore if already exists
+  try {
+    const res = await pool.query('SELECT * from ids');
+    const rows = res.rows;
+    for(const row of rows){
+      if(Number(row.id) === chatId)
+        subed = true;
+    }
+
+    if(subed){
+      await bot.sendMessage(chatId, `⚠️ You already are subscribed!`);
+    }
+    else{
+      await pool.query(
+        'INSERT INTO ids (id) VALUES ($1)',
+        [chatId]
+      );
+  
+      await bot.sendMessage(
+        chatId,
+        `👋 Welcome! You've been subscribed to receive cafeteria menu updates.`
+      );
+    }
+    
+  } catch (err) {
+    console.error('❌ Error saving chat ID:', err.message);
+    await bot.sendMessage(chatId, `⚠️ Something went wrong. Please try again later.`);
+  }
+});
+
+
+//testConnection();
